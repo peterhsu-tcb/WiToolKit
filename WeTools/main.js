@@ -13,6 +13,6 @@ document.querySelectorAll(".tool-card").forEach((button) => {
   button.addEventListener("click", () => {
     const toolName = button.dataset.tool;
     title.textContent = toolName;
-    description.textContent = descriptions[toolName] ?? "Tool preview not available.";
+    description.textContent = descriptions[toolName] ?? `No preview available for ${toolName}.`;
   });
 });
