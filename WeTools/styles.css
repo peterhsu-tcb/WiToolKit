@@ -407,4 +407,4 @@ footer {
 .mm-details summary { cursor: pointer; color: var(--text-muted); padding: 0.25rem 0; }
 .mm-details summary:hover { color: var(--text); }
 
-.mm-meta { font-size: 0.85rem; color: var(--text); }
+.mm-meta { font-size: 0.85rem; color: var(--text); justify-content: space-between; }

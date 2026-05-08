@@ -79,6 +79,94 @@
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
+  /**
+   * saveAs(blob, suggestedName, options?)
+   *
+   * Lets the user choose a destination and filename for `blob`.
+   *  - When the File System Access API is available (Chromium-based browsers
+   *    over a secure context), opens the native "Save As" dialog via
+   *    `window.showSaveFilePicker` and streams the blob to the chosen handle.
+   *  - Otherwise falls back to a `prompt()` for the filename and the standard
+   *    anchor-based download (which honours the browser's "Always ask where to
+   *    save each file" preference, giving users a Save As-style experience).
+   *
+   * `options.types` follows the FilePickerOptions `types` shape, e.g.
+   *   [{ description: "WAV audio", accept: { "audio/wav": [".wav"] } }]
+   *
+   * Returns a promise that resolves to:
+   *   { saved: true, name }   on success
+   *   { saved: false, reason: "cancelled" | "error", error? } otherwise
+   *
+   * Honours the module's no-history policy: nothing about the chosen path is
+   * persisted by this code.
+   */
+  async function saveAs(blob, suggestedName, options) {
+    const types = (options && options.types) || typesForBlob(blob, suggestedName);
+    if (typeof window.showSaveFilePicker === "function") {
+      try {
+        const handle = await window.showSaveFilePicker({
+          suggestedName: suggestedName,
+          types: types,
+          excludeAcceptAllOption: false,
+        });
+        const writable = await handle.createWritable();
+        await writable.write(blob);
+        await writable.close();
+        return { saved: true, name: handle.name || suggestedName };
+      } catch (err) {
+        // User cancelled the picker
+        if (err && (err.name === "AbortError" || err.code === 20)) {
+          return { saved: false, reason: "cancelled" };
+        }
+        // Any other failure (permission denied, quota, etc.) — fall through to
+        // the legacy path so the user still gets a chance to save.
+        // eslint-disable-next-line no-console
+        console.warn("saveAs: showSaveFilePicker failed, falling back.", err);
+      }
+    }
+
+    // Fallback: prompt the user to confirm/edit the filename, then trigger a
+    // normal anchor download. If their browser is configured to ask where to
+    // save each download, that dialog acts as the destination picker.
+    let name = suggestedName;
+    if (typeof window.prompt === "function") {
+      const entered = window.prompt("Save as filename:", suggestedName);
+      if (entered === null) return { saved: false, reason: "cancelled" };
+      const trimmed = entered.trim();
+      if (trimmed) name = trimmed;
+    }
+    try {
+      downloadBlob(blob, name);
+      return { saved: true, name: name };
+    } catch (err) {
+      return { saved: false, reason: "error", error: err };
+    }
+  }
+
+  function typesForBlob(blob, suggestedName) {
+    const ext = (suggestedName.match(/\.[^.\\/]+$/) || [""])[0].toLowerCase();
+    const mime = (blob && blob.type) || "application/octet-stream";
+    const map = {
+      ".wav":  { description: "WAV audio",      accept: { "audio/wav": [".wav"] } },
+      ".mp3":  { description: "MP3 audio",      accept: { "audio/mpeg": [".mp3"] } },
+      ".webm": { description: "WebM video",     accept: { "video/webm": [".webm"] } },
+      ".mp4":  { description: "MP4 video",      accept: { "video/mp4": [".mp4"] } },
+      ".vtt":  { description: "WebVTT subtitles", accept: { "text/vtt": [".vtt"] } },
+      ".srt":  { description: "SubRip subtitles", accept: { "application/x-subrip": [".srt"] } },
+      ".txt":  { description: "Text file",      accept: { "text/plain": [".txt"] } },
+    };
+    if (map[ext]) return [map[ext]];
+    if (ext) {
+      const accept = {};
+      accept[mime] = [ext];
+      return [{ description: "File", accept: accept }];
+    }
+    return undefined;
+  }
+
+  // expose for completeness / re-use
+  window.WeToolsSaveAs = saveAs;
+
   // --- Subtitle helpers ---
   function srtToVtt(srt) {
     const body = srt
@@ -175,9 +263,27 @@
       state.file = file;
       state.kind = kind;
 
-      const meta = el("div", { class: "mm-meta" }, [
-        el("strong", null, file.name),
-        el("span", { class: "mm-muted" }, " · " + (file.type || "unknown") + " · " + (file.size / 1024 / 1024).toFixed(2) + " MB"),
+      const saveBtn = el(
+        "button",
+        { type: "button", class: "mm-btn mm-btn-sm", title: "Save the loaded file to a chosen location" },
+        "Save as…"
+      );
+      saveBtn.addEventListener("click", async () => {
+        if (!state.file) return;
+        saveBtn.disabled = true;
+        try {
+          await saveAs(state.file, state.file.name);
+        } finally {
+          saveBtn.disabled = false;
+        }
+      });
+
+      const meta = el("div", { class: "mm-meta mm-row" }, [
+        el("div", null, [
+          el("strong", null, file.name),
+          el("span", { class: "mm-muted" }, " · " + (file.type || "unknown") + " · " + (file.size / 1024 / 1024).toFixed(2) + " MB"),
+        ]),
+        saveBtn,
       ]);
 
       let viewer;
@@ -220,7 +326,7 @@
       status.textContent = "Loaded sidecar subtitles: " + f.name;
     });
 
-    extractBtn.addEventListener("click", () => {
+    extractBtn.addEventListener("click", async () => {
       const media = hostRoot.querySelector("#mm-media");
       if (!media || !("textTracks" in media)) {
         status.textContent = "No video element available.";
@@ -239,7 +345,7 @@
         if (cues.length === 0) continue;
         total += cues.length;
         const vtt = cuesToVtt(cues);
-        downloadBlob(new Blob([vtt], { type: "text/vtt" }), (state.file ? state.file.name.replace(/\.[^.]+$/, "") : "subtitles") + "." + (t.language || "track" + i) + ".vtt");
+        await saveAs(new Blob([vtt], { type: "text/vtt" }), (state.file ? state.file.name.replace(/\.[^.]+$/, "") : "subtitles") + "." + (t.language || "track" + i) + ".vtt");
         renderCuesFromText(vtt);
       }
       status.textContent = total > 0
@@ -354,10 +460,10 @@
     }
 
     clearBtn.addEventListener("click", () => { transcript.value = ""; });
-    dlBtn.addEventListener("click", () => {
+    dlBtn.addEventListener("click", async () => {
       const text = transcript.value;
       if (!text.trim()) return;
-      downloadBlob(new Blob([text], { type: "text/plain" }), "transcript.txt");
+      await saveAs(new Blob([text], { type: "text/plain" }), "transcript.txt");
     });
 
     host.appendChild(el("div", { class: "mm-row" }, [
@@ -418,8 +524,10 @@
           }
           status.textContent = "Encoding WAV…";
           const blob = encodeWav(out);
-          downloadBlob(blob, state.file.name.replace(/\.[^.]+$/, "") + ".cut.wav");
-          status.textContent = "Done. Cut audio downloaded as WAV.";
+          const res = await saveAs(blob, state.file.name.replace(/\.[^.]+$/, "") + ".cut.wav");
+          status.textContent = res.saved
+            ? "Done. Cut audio saved as " + res.name + "."
+            : (res.reason === "cancelled" ? "Save cancelled." : "Save failed.");
         } else {
           // video
           if (typeof MediaRecorder === "undefined" || !m.captureStream) {
@@ -448,8 +556,10 @@
           m.addEventListener("timeupdate", onTime);
           await done;
           const blob = new Blob(chunks, { type: mime });
-          downloadBlob(blob, state.file.name.replace(/\.[^.]+$/, "") + ".cut.webm");
-          status.textContent = "Done. Cut video downloaded as WebM.";
+          const res = await saveAs(blob, state.file.name.replace(/\.[^.]+$/, "") + ".cut.webm");
+          status.textContent = res.saved
+            ? "Done. Cut video saved as " + res.name + "."
+            : (res.reason === "cancelled" ? "Save cancelled." : "Save failed.");
         }
       } catch (err) {
         status.textContent = "Cut failed: " + err.message;

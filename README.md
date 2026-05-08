@@ -56,3 +56,18 @@ Sections:
   `yt-dlp` (and `ffmpeg`) are installed.
 
 External tools assumed for the snippet sections: `ffmpeg`, `yt-dlp`, `whisper`.
+
+### Save As
+
+Every output (cut audio WAV, cut video WebM, extracted VTT, transcript, and the
+loaded source file via the Player's *Save as…* button) is routed through a
+shared `saveAs(blob, suggestedName)` helper that:
+
+1. Uses `window.showSaveFilePicker` (File System Access API) when available —
+   the user picks the destination folder and filename in a native dialog, and
+   the blob is streamed directly to the chosen handle.
+2. Falls back to `window.prompt()` for the filename plus the standard
+   anchor-based download (which respects the browser's "Always ask where to
+   save each file" setting).
+
+The helper is also exposed as `window.WeToolsSaveAs` for ad-hoc use.
