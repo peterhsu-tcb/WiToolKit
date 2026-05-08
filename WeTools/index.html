@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WeTools</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="app">
+    <header>
+      <h1>WeTools</h1>
+      <p>Redesigned multi-tool workspace inspired by WiToolKit.</p>
+    </header>
+
+    <section class="tools-grid" aria-label="Tool dashboard">
+      <button class="tool-card" data-tool="File Manager">📁 File Manager</button>
+      <button class="tool-card" data-tool="Text Compare">🔍 Text Compare</button>
+      <button class="tool-card" data-tool="Media Converter">🎬 Media Converter</button>
+      <button class="tool-card" data-tool="PDF Text Extract">📄 PDF Text Extract</button>
+      <button class="tool-card" data-tool="Agentic Client">🤖 Agentic Client</button>
+    </section>
+
+    <section class="panel" aria-live="polite">
+      <h2 id="selected-title">Select a tool</h2>
+      <p id="selected-description">
+        Choose one tool card above to preview its redesigned workspace.
+      </p>
+    </section>
+  </main>
+
+  <script src="./main.js"></script>
+</body>
+</html>
