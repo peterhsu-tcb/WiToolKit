@@ -16,4 +16,4 @@ Based on the upstream WiToolKit concept (multi-tool utility app), this redesign 
 
 Open the redesigned app directly in a browser:
 
-`/home/runner/work/WiToolKit/WiToolKit/WeTools/index.html`
+`WeTools/index.html`
