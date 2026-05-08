@@ -8,11 +8,22 @@ const descriptions = {
 
 const title = document.getElementById("selected-title");
 const description = document.getElementById("selected-description");
+const cards = Array.from(document.querySelectorAll(".tool-card"));
 
-document.querySelectorAll(".tool-card").forEach((button) => {
-  button.addEventListener("click", () => {
-    const toolName = button.dataset.tool;
-    title.textContent = toolName;
-    description.textContent = descriptions[toolName] ?? `No preview available for ${toolName}.`;
+function selectCard(card) {
+  const toolName = card.dataset.tool;
+  cards.forEach((c) => c.setAttribute("aria-pressed", c === card ? "true" : "false"));
+  title.textContent = toolName;
+  description.textContent = descriptions[toolName] ?? `No preview available for ${toolName}.`;
+}
+
+cards.forEach((card, index) => {
+  card.addEventListener("click", () => selectCard(card));
+  card.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowDown" && event.key !== "ArrowUp") return;
+    event.preventDefault();
+    const delta = event.key === "ArrowDown" ? 1 : -1;
+    const next = cards[(index + delta + cards.length) % cards.length];
+    next.focus();
   });
 });

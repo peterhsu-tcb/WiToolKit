@@ -1,60 +1,235 @@
 :root {
   color-scheme: light dark;
   font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Design tokens — dark (default) */
+  --bg: #0b1020;
+  --surface: #161f37;
+  --surface-2: #1d2745;
+  --border: #3a4360;
+  --text: #f4f7ff;
+  --text-muted: #a8b2cc;
+  --accent: #7ca0ff;
+  --accent-soft: rgba(124, 160, 255, 0.16);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.18);
+  --transition: 160ms ease;
 }
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #f7f8fc;
+    --surface: #ffffff;
+    --surface-2: #f1f3f9;
+    --border: #d8dde8;
+    --text: #1a2138;
+    --text-muted: #5a6480;
+    --accent: #2f5cff;
+    --accent-soft: rgba(47, 92, 255, 0.10);
+    --shadow: 0 1px 2px rgba(20, 30, 60, 0.06), 0 8px 24px rgba(20, 30, 60, 0.08);
+  }
+}
+
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
-  background: #0b1020;
-  color: #f4f7ff;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
 }
 
 .app {
-  max-width: 960px;
+  max-width: 1100px;
   margin: 0 auto;
-  padding: 2rem 1rem 3rem;
+  padding: 1.5rem 1rem 3rem;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.brand-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent), white 30%));
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-weight: 700;
 }
 
 header h1 {
   margin: 0;
-  font-size: 2.2rem;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
 }
 
-header p {
-  margin-top: 0.5rem;
-  opacity: 0.85;
+header .tagline {
+  margin: 0.15rem 0 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
-.tools-grid {
-  margin-top: 1.5rem;
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.icon-btn {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  width: 36px;
+  height: 36px;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 0.75rem;
+  place-items: center;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition);
+}
+
+.icon-btn:hover { border-color: var(--accent); }
+.icon-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.layout {
+  margin-top: 1.25rem;
+  display: grid;
+  grid-template-columns: minmax(220px, 260px) 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 720px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+.sidebar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.5rem;
+  box-shadow: var(--shadow);
+  align-self: start;
+}
+
+.sidebar-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding: 0.5rem 0.75rem 0.25rem;
+  margin: 0;
+}
+
+.tools-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .tool-card {
-  border: 1px solid #3a4360;
-  border-radius: 12px;
-  background: #161f37;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
   color: inherit;
   font: inherit;
-  padding: 1rem;
+  padding: 0.6rem 0.75rem;
   text-align: left;
   cursor: pointer;
+  transition: background var(--transition), border-color var(--transition), transform var(--transition);
+}
+
+.tool-card .icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 20px;
+  color: var(--text-muted);
+  transition: color var(--transition);
 }
 
 .tool-card:hover {
-  border-color: #7ca0ff;
+  background: var(--surface-2);
 }
 
-.panel {
-  margin-top: 1rem;
-  border: 1px solid #3a4360;
-  border-radius: 12px;
-  background: #161f37;
-  padding: 1rem;
+.tool-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-.panel h2 {
-  margin-top: 0;
+.tool-card[aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: color-mix(in oklab, var(--accent), transparent 60%);
+  color: var(--text);
+}
+
+.tool-card[aria-pressed="true"] .icon { color: var(--accent); }
+
+@media (prefers-reduced-motion: no-preference) {
+  .tool-card:active { transform: translateY(1px); }
+}
+
+.workspace {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.25rem 1.5rem;
+  min-height: 240px;
+  box-shadow: var(--shadow);
+}
+
+.workspace h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.25rem;
+}
+
+.workspace p {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.empty-state {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 1.5rem 0;
+  color: var(--text-muted);
+}
+
+.empty-state svg {
+  width: 56px;
+  height: 56px;
+  opacity: 0.6;
+  margin-bottom: 0.5rem;
+}
+
+footer {
+  margin-top: 1.25rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8rem;
 }

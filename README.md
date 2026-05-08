@@ -17,3 +17,11 @@ Based on the upstream WiToolKit concept (multi-tool utility app), this redesign 
 Open the redesigned app directly in a browser:
 
 `WeTools/index.html`
+
+## UI
+
+- Sidebar + workspace layout, responsive down to mobile widths.
+- Light/dark theme via `prefers-color-scheme` (no toggle yet).
+- Design tokens in `:root` (`--bg`, `--surface`, `--border`, `--accent`, `--radius`).
+- Accessible: `aria-pressed` selected state, visible focus ring, arrow-key navigation between tools, `aria-live` workspace.
+- Inline SVG icon set (no emoji rendering inconsistencies); SVG favicon.
