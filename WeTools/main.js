@@ -5,6 +5,7 @@ const descriptions = {
   "PDF Text Extract": "Extract searchable text from PDF documents quickly.",
   "Agentic Client": "Interact with MCP/agent workflows from one compact view.",
   "Media Manager": "Play media, extract subtitles, transcribe voice, cut clips, and build YouTube download commands. No history is saved.",
+  "Batch Image Downloader": "Download a sequential range of images (e.g. img_001.jpg … img_100.jpg) from a base URL with concurrent fetches and optional folder destination.",
 };
 
 const workspace = document.getElementById("workspace-content");
@@ -22,6 +23,11 @@ function renderEmpty(toolName) {
   workspace.appendChild(wrap);
 }
 
+const MOUNTABLE_TOOLS = {
+  "Media Manager": () => window.WeToolsMediaManager,
+  "Batch Image Downloader": () => window.WeToolsBatchImageDownloader,
+};
+
 function selectCard(card) {
   const previous = cards.find((c) => c.getAttribute("aria-pressed") === "true");
   const previousTool = previous ? previous.dataset.tool : null;
@@ -29,14 +35,18 @@ function selectCard(card) {
 
   cards.forEach((c) => c.setAttribute("aria-pressed", c === card ? "true" : "false"));
 
-  // Tear down Media Manager when leaving it
-  if (previousTool === "Media Manager" && toolName !== "Media Manager" && window.WeToolsMediaManager) {
-    window.WeToolsMediaManager.unmount(workspace);
+  // Tear down any previously mounted tool when leaving it.
+  if (previousTool && previousTool !== toolName && MOUNTABLE_TOOLS[previousTool]) {
+    const prevMod = MOUNTABLE_TOOLS[previousTool]();
+    if (prevMod && typeof prevMod.unmount === "function") prevMod.unmount(workspace);
   }
 
-  if (toolName === "Media Manager" && window.WeToolsMediaManager) {
-    window.WeToolsMediaManager.mount(workspace);
-    return;
+  if (MOUNTABLE_TOOLS[toolName]) {
+    const mod = MOUNTABLE_TOOLS[toolName]();
+    if (mod && typeof mod.mount === "function") {
+      mod.mount(workspace);
+      return;
+    }
   }
 
   renderEmpty(toolName);

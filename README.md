@@ -12,6 +12,7 @@ Based on the upstream WiToolKit concept (multi-tool utility app), this redesign 
 - PDF Text Extract
 - Agentic Client
 - Media Manager (new)
+- Batch Image Downloader (new)
 
 ## Run
 
@@ -71,3 +72,16 @@ shared `saveAs(blob, suggestedName)` helper that:
    save each file" setting).
 
 The helper is also exposed as `window.WeToolsSaveAs` for ad-hoc use.
+
+## Batch Image Downloader
+
+A browser port of the provided Python tkinter "Image Downloader" utility.
+
+Inputs (all live in the page, nothing is persisted):
+
+- **Base URL** — directory portion only (the trailing slash is stripped).
+- **Number of files**, **Number of tasks (parallel)**, **Filename prefix**, **Zero padding**, **File extension**, **Start index**.
+- **Destination folder** — uses `window.showDirectoryPicker` (File System Access API) when available so files land directly in the chosen folder. Otherwise each successful download is offered through the browser's normal "save file" mechanism.
+- **Request headers** — one `Key: Value` per line. Browsers forbid setting many headers from JavaScript (`Host`, `User-Agent`, `Referer`, `Cookie`, `Connection`, `Accept-Encoding`, `DNT`, and the `Sec-*` / `Proxy-*` families); such lines are filtered out and a one-time warning is logged. The browser still sends its own values for those headers automatically.
+
+The download loop uses a configurable concurrency pool (the **Number of tasks** field), an `AbortController` so the **Stop** button cancels in-flight requests, and a live log + progress bar. The status line summarises the run, e.g. `Done. 9 ok, 1 failed, of 10 requested.`
